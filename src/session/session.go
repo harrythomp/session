@@ -73,7 +73,7 @@ func sortSessions(sessions []Session) {
 		} else if !a.IsActive && b.IsActive {
 			return 1
 		}
-		return strings.Compare(a.Name, b.Name)
+		return strings.Compare(a.Path+a.Name, b.Path+b.Name)
 	})
 }
 
