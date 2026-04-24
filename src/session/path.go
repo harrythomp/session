@@ -7,48 +7,52 @@ import (
 	"strings"
 )
 
-func findSessionsFromPaths(paths []string) ([]Session, error) {
+func findSessionsFromPath(path string) ([]Session, error) {
+	realPaths, err := expandPathWildcards(path)
+	if err != nil {
+		return nil, err
+	}
 	sessions := make([]Session, 0)
-	for _, path := range paths {
-		childSessions, err := findSessionsFromPath(path)
+	for _, path := range realPaths {
+		session, err := sessionChildrenOfRealPath(path)
 		if err != nil {
 			return nil, err
 		}
-		sessions = append(sessions, childSessions...)
+		sessions = append(sessions, session...)
 	}
 	return sessions, nil
 }
 
-func findSessionsFromPath(path string) ([]Session, error) {
+func expandPathWildcards(path string) ([]string, error) {
 	pathParts := strings.Split(path, "/")
 
 	currentPath := ""
 
-	sessions := make([]Session, 0)
+	realPaths := make([]string, 0)
 
 	for i, part := range pathParts {
 		if part == "*" {
 			partChildren, err := os.ReadDir(currentPath)
 			if errors.Is(err, fs.ErrNotExist) {
-				return sessions, nil
+				return realPaths, nil
 			}
 			if err != nil {
 				return nil, err
 			}
 			for _, child := range partChildren {
 				if isVisibleDirectory(child) {
-					newRoot := currentPath + "/" + child.Name()
+					newPath := currentPath + "/" + child.Name()
 					if i < len(pathParts)-1 {
-						newRoot = newRoot + "/" + strings.Join(pathParts[i+1:], "/")
+						newPath = newPath + "/" + strings.Join(pathParts[i+1:], "/")
 					}
-					childSessions, err := findSessionsFromPath(newRoot)
+					childPaths, err := expandPathWildcards(newPath)
 					if err != nil {
 						return nil, err
 					}
-					sessions = append(sessions, childSessions...)
+					realPaths = append(realPaths, childPaths...)
 				}
 			}
-			return sessions, nil
+			return realPaths, nil
 		}
 		if i == 0 {
 			currentPath = part
@@ -57,17 +61,13 @@ func findSessionsFromPath(path string) ([]Session, error) {
 		}
 	}
 
-	childSessions, err := sessionChildrenOfPath(currentPath)
-	if err != nil {
-		return nil, err
-	}
-	sessions = append(sessions, childSessions...)
+	realPaths = append(realPaths, currentPath)
 
-	return sessions, nil
+	return realPaths, nil
 }
 
-func sessionChildrenOfPath(path string) ([]Session, error) {
-	children, err := os.ReadDir(path)
+func sessionChildrenOfRealPath(realPath string) ([]Session, error) {
+	children, err := os.ReadDir(realPath)
 	if errors.Is(err, fs.ErrNotExist) {
 		return make([]Session, 0), nil
 	}
@@ -81,7 +81,7 @@ func sessionChildrenOfPath(path string) ([]Session, error) {
 		if isVisibleDirectory(child) {
 			sessions = append(sessions, Session{
 				Name:     child.Name(),
-				Path:     path + "/" + child.Name(),
+				Path:     realPath + "/" + child.Name(),
 				IsActive: false,
 			})
 		}
