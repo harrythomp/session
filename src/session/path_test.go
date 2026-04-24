@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestFindSessionsFromPath(t *testing.T) {
+func Test_findSessionsFromPath(t *testing.T) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -69,6 +69,9 @@ func TestFindSessionsFromPath(t *testing.T) {
 			}
 			if tt.wantErr {
 				t.Fatal("FindSessions() succeeded unexpectedly")
+			}
+			if len(got) != len(tt.want) {
+				t.Fatalf("FindSessions() returned %d sessions, want %d", len(got), len(tt.want))
 			}
 			for i, want := range tt.want {
 				if got[i].Name != want.Name || got[i].Path != want.Path {

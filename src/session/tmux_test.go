@@ -1,0 +1,113 @@
+package session
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func Test_listTmuxSessionsF(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := filepath.Abs(cwd + "/../../")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		format  string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "names",
+			format:  "#{session_name}",
+			want:    []string{"session"},
+			wantErr: false,
+		},
+		{
+			name:    "paths",
+			format:  "#{session_path}",
+			want:    []string{root},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotErr := listTmuxSessionsF(tt.format)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("listTmuxSessionsF() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("listTmuxSessionsF() succeeded unexpectedly")
+			}
+			if len(got) != len(tt.want) {
+				t.Fatalf("listTmuxSessionsF() returned %d sessions, want %d", len(got), len(tt.want))
+			}
+			for i, want := range tt.want {
+				if got[i] != want {
+					t.Errorf("listTmuxSessionsF()[%d] = %v, want %v", i, got[i], want)
+				}
+			}
+		})
+	}
+}
+
+func Test_findSessionsFromTmux(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := filepath.Abs(cwd + "/../../")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		want    []Session
+		wantErr bool
+	}{
+		{
+			name: "basic",
+			want: []Session{
+				{
+					Name:     "session",
+					Path:     root,
+					IsActive: true,
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotErr := findSessionsFromTmux()
+			if gotErr != nil || got == nil {
+				if !tt.wantErr {
+					t.Errorf("FindSessions() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("FindSessions() succeeded unexpectedly")
+			}
+			if len(got) != len(tt.want) {
+				t.Fatalf("FindSessions() returned %d sessions, want %d", len(got), len(tt.want))
+			}
+			for i, want := range tt.want {
+				if got[i].Name != want.Name || got[i].Path != want.Path {
+					t.Errorf("FindSessions()[%d] = %v, want %v", i, got[i], want)
+				}
+			}
+		})
+	}
+}
