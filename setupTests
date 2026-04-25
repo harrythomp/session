@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+cd test/zero-depth-worktree
+mkdir project-one
+cd project-one
+git init --bare -b main
+git worktree add main
