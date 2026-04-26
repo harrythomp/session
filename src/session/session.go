@@ -12,6 +12,7 @@ import (
 type Session struct {
 	Name     string
 	Path     string
+	Branch   string
 	IsActive bool
 }
 

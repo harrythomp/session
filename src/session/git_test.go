@@ -20,14 +20,17 @@ func Test_findWorktreesFromRealPath(t *testing.T) {
 		name string // description of this test case
 		// Named input parameters for target function.
 		path    string
-		want    []string
+		want    []Worktree
 		wantErr bool
 	}{
 		{
 			name: "zero-depth-worktree",
 			path: root + "/test/zero-depth-worktree/project-one",
-			want: []string{
-				root + "/test/zero-depth-worktree/project-one/main",
+			want: []Worktree{
+				{
+					Path:   root + "/test/zero-depth-worktree/project-one/main",
+					Branch: "main",
+				},
 			},
 		},
 	}

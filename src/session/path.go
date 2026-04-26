@@ -98,20 +98,27 @@ func sessionChildrenOfRealPath(realPath string) ([]Session, error) {
 			childPath := realPath + "/" + child.Name()
 			worktrees, err := findWorktreesFromRealPath(childPath)
 
+			// There are no worktrees, or there is only one worktree in the same or a parent directory
 			if err != nil ||
 				len(worktrees) == 0 ||
 				(len(worktrees) == 1 &&
-					(worktrees[0] == childPath || len(worktrees[0]) < len(childPath))) {
+					(worktrees[0].Path == childPath || len(worktrees[0].Path) < len(childPath))) {
+				branch := ""
+				if len(worktrees) == 1 {
+					branch = worktrees[0].Branch
+				}
 				sessions = append(sessions, Session{
 					Name:     child.Name(),
 					Path:     realPath + "/" + child.Name(),
+					Branch:   branch,
 					IsActive: false,
 				})
 			} else {
 				for _, worktree := range worktrees {
 					sessions = append(sessions, Session{
-						Name:     child.Name() + "[" + filepath.Base(worktree) + "]",
-						Path:     worktree,
+						Name:     child.Name() + "[" + filepath.Base(worktree.Path) + "]",
+						Path:     worktree.Path,
+						Branch:   worktree.Branch,
 						IsActive: false,
 					})
 				}

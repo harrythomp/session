@@ -20,9 +20,11 @@ func findSessionsFromTmux() ([]Session, error) {
 	sessions := make([]Session, 0)
 
 	for i, name := range names {
+		branch, _ := getBranchFromRealPath(paths[i])
 		sessions = append(sessions, Session{
 			Name:     name,
 			Path:     paths[i],
+			Branch:   branch,
 			IsActive: true,
 		})
 	}
