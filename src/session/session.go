@@ -39,7 +39,11 @@ func FindSessions(conf config.Config) ([]Session, error) {
 	}
 
 	for _, path := range conf.IncludePaths {
-		dir, err := os.Stat(path)
+		realPath, err := expandPathHomeDir(path)
+		if err != nil {
+			return nil, err
+		}
+		dir, err := os.Stat(realPath)
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
 		}
@@ -49,9 +53,11 @@ func FindSessions(conf config.Config) ([]Session, error) {
 		if !dir.IsDir() {
 			continue
 		}
+		branch, _ := getBranchFromRealPath(realPath)
 		inactiveSessions = append(inactiveSessions, Session{
 			Name:     dir.Name(),
-			Path:     path,
+			Path:     realPath,
+			Branch:   branch,
 			IsActive: false,
 		})
 	}
