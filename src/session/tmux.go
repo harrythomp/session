@@ -22,10 +22,11 @@ func findSessionsFromTmux() ([]Session, error) {
 	for i, name := range names {
 		branch, _ := getBranchFromRealPath(paths[i])
 		sessions = append(sessions, Session{
-			Name:     name,
-			Path:     paths[i],
-			Branch:   branch,
-			IsActive: true,
+			Name:        name,
+			Path:        paths[i],
+			ProjectPath: paths[i],
+			Branch:      branch,
+			IsActive:    true,
 		})
 	}
 
@@ -96,6 +97,16 @@ func sessionInit(conf config.Config, session Session) error {
 
 	globalScript := filepath.Join(conf.Location, "scripts", session.Name)
 	if found, err := tryInitScript(globalScript, session); found {
+		return err
+	}
+
+	projectLocalScript := filepath.Join(session.ProjectPath, ".session")
+	if found, err := tryInitScript(projectLocalScript, session); found {
+		return err
+	}
+
+	projectGlobalScript := filepath.Join(conf.Location, "scripts", filepath.Base(session.ProjectPath))
+	if found, err := tryInitScript(projectGlobalScript, session); found {
 		return err
 	}
 

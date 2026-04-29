@@ -10,10 +10,11 @@ import (
 )
 
 type Session struct {
-	Name     string
-	Path     string
-	Branch   string
-	IsActive bool
+	Name        string
+	Path        string
+	ProjectPath string
+	Branch      string
+	IsActive    bool
 }
 
 type sessionKey struct {
@@ -55,10 +56,11 @@ func FindSessions(conf config.Config) ([]Session, error) {
 		}
 		branch, _ := getBranchFromRealPath(realPath)
 		inactiveSessions = append(inactiveSessions, Session{
-			Name:     dir.Name(),
-			Path:     realPath,
-			Branch:   branch,
-			IsActive: false,
+			Name:        dir.Name(),
+			Path:        realPath,
+			ProjectPath: realPath,
+			Branch:      branch,
+			IsActive:    false,
 		})
 	}
 
