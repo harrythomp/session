@@ -63,7 +63,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(m.Search) > 0 {
 				m.Search = m.Search[:len(m.Search)-1]
 			}
-		case "ctrl+h":
+		case "ctrl+s":
 			m.HideInactive = !m.HideInactive
 		default:
 			if msg.Key().Mod == 0 {
