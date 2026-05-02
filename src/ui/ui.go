@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"harry/session/src/config"
 	"harry/session/src/session"
 	"strings"
 
@@ -10,22 +9,22 @@ import (
 )
 
 type Model struct {
-	Conf         config.Config
-	Sessions     []session.Session
-	ViewSessions []session.Session
-	Search       string
-	Cursor       int
-	Width        int
-	Height       int
+	Sessions        []session.Session
+	ViewSessions    []session.Session
+	Search          string
+	Cursor          int
+	SelectedSession *session.Session
+	Width           int
+	Height          int
 }
 
-func InitialModel(conf config.Config, sessions []session.Session) Model {
+func InitialModel(sessions []session.Session) Model {
 	return Model{
-		Conf:         conf,
-		Sessions:     sessions,
-		ViewSessions: session.FuzzySearch("", sessions),
-		Search:       "",
-		Cursor:       0,
+		Sessions:        sessions,
+		ViewSessions:    session.FuzzySearch("", sessions),
+		Search:          "",
+		Cursor:          0,
+		SelectedSession: nil,
 	}
 }
 
@@ -57,7 +56,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Search = strings.Join(parts[:len(parts)-1], separator)
 			}
 		case "enter":
-			session.AttachToSession(m.Conf, m.ViewSessions[m.Cursor])
+			m.SelectedSession = &m.ViewSessions[m.Cursor]
 			return m, tea.Quit
 		case "backspace":
 			if len(m.Search) > 0 {

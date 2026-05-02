@@ -35,9 +35,28 @@ func main() {
 		return
 	}
 
-	program := tea.NewProgram(ui.InitialModel(conf, sessions))
-	if _, err := program.Run(); err != nil {
+	program := tea.NewProgram(ui.InitialModel(sessions))
+	model, err := program.Run()
+	if err != nil {
 		fmt.Printf("Error when running program: %v\n", err)
+		os.Exit(1)
+		return
+	}
+
+	uiModel, ok := model.(ui.Model)
+	if !ok {
+		fmt.Printf("Error when casting model to ui.Model: %v\n", err)
+		os.Exit(1)
+		return
+	}
+
+	if uiModel.SelectedSession == nil {
+		return
+	}
+
+	err = session.AttachToSession(conf, *uiModel.SelectedSession)
+	if err != nil {
+		fmt.Printf("Error when attaching to session: %v\n", err)
 		os.Exit(1)
 		return
 	}
