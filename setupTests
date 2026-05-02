@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-# Create a bare repository with a worktree
-cd test/zero-depth-worktree
-mkdir project-one
-cd project-one
-git init --bare -b main
-git worktree add main
