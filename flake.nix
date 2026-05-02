@@ -12,7 +12,7 @@
         perSystem = { pkgs, ... }: {
             packages.default = pkgs.buildGoModule {
                 pname = "session";
-                version = "1.0.1";
+                version = "1.0.2";
 
                 src = ./.;
 
