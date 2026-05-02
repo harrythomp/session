@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"harry/session/src/session"
 	"strings"
 
@@ -88,11 +87,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() tea.View {
+	if m.Width == 0 || m.Height == 0 {
+		return tea.NewView("")
+	}
+
 	var s strings.Builder
-	s.WriteString(m.Search)
-	s.WriteString("\n\n")
+	bufferSpace := 4
+
 	longestName := 0
 	longestBranch := 0
+	longestPath := 0
 	for _, session := range m.Sessions {
 		if len(session.Name) > longestName {
 			longestName = len(session.Name)
@@ -100,10 +104,53 @@ func (m Model) View() tea.View {
 		if len(session.Branch) > longestBranch {
 			longestBranch = len(session.Branch)
 		}
+		if len(session.Path) > longestPath {
+			longestPath = len(session.Path)
+		}
 	}
-	longestName += 4
-	longestBranch += 4
+
+	appWidth := 4 + longestName + bufferSpace + longestPath + bufferSpace + longestBranch
+
+	xStart := max((m.Width-appWidth)/2, 0)
+	yStart := max(m.Height/8, 1)
+
+	s.WriteString(strings.Repeat("\n", yStart))
+
+	searchBoxWidth := max(m.Width/3, 0)
+	innerSearchBoxWidth := min(len(m.Search), searchBoxWidth-2)
+	s.WriteString(strings.Repeat(" ", max(m.Width/3, 1)-1))
+	s.WriteString("╭")
+	s.WriteString(strings.Repeat("─", searchBoxWidth-2))
+	s.WriteString("╮")
+	s.WriteString("\n")
+	s.WriteString(strings.Repeat(" ", max(m.Width/3, 1)-1))
+	s.WriteString("│")
+	s.WriteString(m.Search[0:innerSearchBoxWidth])
+	if innerSearchBoxWidth < searchBoxWidth-2 {
+		s.WriteString("█")
+	}
+	s.WriteString(strings.Repeat(" ", max(searchBoxWidth-innerSearchBoxWidth-3, 0)))
+	s.WriteString("│")
+	s.WriteString("\n")
+	s.WriteString(strings.Repeat(" ", max(m.Width/3, 1)-1))
+	s.WriteString("╰")
+	s.WriteString(strings.Repeat("─", searchBoxWidth-2))
+	s.WriteString("╯")
+	s.WriteString("\n\n\n\n")
+
+	name := "Name"
+	path := "Path"
+	branch := "Branch"
+	s.WriteString(strings.Repeat(" ", xStart+4))
+	s.WriteString(name)
+	s.WriteString(strings.Repeat(" ", longestName+bufferSpace-len(name)))
+	s.WriteString(path)
+	s.WriteString(strings.Repeat(" ", longestPath+bufferSpace-len(path)))
+	s.WriteString(branch)
+	s.WriteString("\n\n")
+
 	for i, session := range m.ViewSessions {
+		s.WriteString(strings.Repeat(" ", xStart))
 		if i == m.Cursor {
 			s.WriteString("▸ ")
 		} else {
@@ -114,9 +161,14 @@ func (m Model) View() tea.View {
 		} else {
 			s.WriteString("  ")
 		}
-		nameBuffer := strings.Repeat(" ", longestName-len(session.Name))
-		branchBuffer := strings.Repeat(" ", longestBranch-len(session.Branch))
-		fmt.Fprintf(&s, "%s%s%s%s%s\n", session.Name, nameBuffer, session.Branch, branchBuffer, session.Path)
+		nameBuffer := strings.Repeat(" ", longestName+bufferSpace-len(session.Name))
+		pathBuffer := strings.Repeat(" ", longestPath+bufferSpace-len(session.Path))
+		s.WriteString(session.Name)
+		s.WriteString(nameBuffer)
+		s.WriteString(session.Path)
+		s.WriteString(pathBuffer)
+		s.WriteString(session.Branch)
+		s.WriteString("\n")
 	}
 	view := tea.NewView(s.String())
 	view.AltScreen = true
