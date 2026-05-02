@@ -120,7 +120,7 @@ func sessionInit(conf config.Config, session Session) error {
 
 func tryInitScript(script string, session Session) (bool, error) {
 	if file, err := os.Stat(script); err == nil && !file.IsDir() {
-		_, err := exec.Command("tmux", "send-keys", "-t", session.Name, script+" "+session.Name, "c-M").Output()
+		_, err := exec.Command("tmux", "send-keys", "-t", session.Name+":1", script+" "+session.Name, "c-M").Output()
 		if err != nil {
 			return true, err
 		}
