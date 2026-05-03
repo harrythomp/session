@@ -37,39 +37,46 @@ func Test_FindSessions(t *testing.T) {
 			},
 			want: []Session{
 				{
-					Name:     "session",
-					Path:     root,
-					IsActive: true,
+					Name:        "project-one",
+					Path:        root + "/test/zero-depth-basic/project-one",
+					ProjectPath: root + "/test/zero-depth-basic/project-one",
+					IsActive:    false,
 				},
 				{
-					Name:     "extra-project",
-					Path:     root + "/test/extra-project",
-					IsActive: false,
+					Name:        "project-two",
+					Path:        root + "/test/zero-depth-basic/project-two",
+					ProjectPath: root + "/test/zero-depth-basic/project-two",
+					IsActive:    false,
 				},
 				{
-					Name:     "deep-project-one",
-					Path:     root + "/test/one-depth-basic/skip/deep-project-one",
-					IsActive: false,
+					Name:        "project-three",
+					Path:        root + "/test/zero-depth-basic/project-three",
+					ProjectPath: root + "/test/zero-depth-basic/project-three",
+					IsActive:    false,
 				},
 				{
-					Name:     "deep-project-two",
-					Path:     root + "/test/one-depth-basic/skip/deep-project-two",
-					IsActive: false,
+					Name:        "deep-project-one",
+					Path:        root + "/test/one-depth-basic/skip/deep-project-one",
+					ProjectPath: root + "/test/one-depth-basic/skip/deep-project-one",
+					IsActive:    false,
 				},
 				{
-					Name:     "project-one",
-					Path:     root + "/test/zero-depth-basic/project-one",
-					IsActive: false,
+					Name:        "deep-project-two",
+					Path:        root + "/test/one-depth-basic/skip/deep-project-two",
+					ProjectPath: root + "/test/one-depth-basic/skip/deep-project-two",
+					IsActive:    false,
 				},
 				{
-					Name:     "project-three",
-					Path:     root + "/test/zero-depth-basic/project-three",
-					IsActive: false,
+					Name:        "session",
+					Path:        root,
+					ProjectPath: root,
+					IsActive:    true,
 				},
 				{
-					Name:     "project-two",
-					Path:     root + "/test/zero-depth-basic/project-two",
-					IsActive: false,
+					Name:        "extra-project",
+					Path:        root + "/test/extra-project",
+					ProjectPath: root + "/test/extra-project",
+					IsActive:    false,
 				},
 			},
 			wantErr: false,
@@ -90,9 +97,16 @@ func Test_FindSessions(t *testing.T) {
 			if len(got) != len(tt.want) {
 				t.Fatalf("FindSessions() returned %d sessions, want %d", len(got), len(tt.want))
 			}
-			for i, want := range tt.want {
-				if got[i].Name != want.Name || got[i].Path != want.Path {
-					t.Errorf("FindSessions()[%d] = %v, want %v", i, got[i], want)
+			for _, want := range tt.want {
+				success := false
+				for _, session := range got {
+					if session.Name == want.Name && session.Path == want.Path && session.IsActive == want.IsActive {
+						success = true
+						break
+					}
+				}
+				if !success {
+					t.Errorf("Unable to find session %s at %s", want.Name, want.Path)
 				}
 			}
 		})
