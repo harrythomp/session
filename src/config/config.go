@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -25,23 +26,10 @@ const defaultConfigContent = `{
 func ParseFromConfigDir(location string) (Config, error) {
 	file, err := os.Open(filepath.Join(location, "config.json"))
 	if errors.Is(err, os.ErrNotExist) {
-		err := os.MkdirAll(location, 0755) // u: rwx, g: r-x, o: r-x
-		if err != nil {
-			return Config{}, err
-		}
-		file, err = os.OpenFile(filepath.Join(location, "config.json"), os.O_CREATE|os.O_WRONLY, 0644) // u: rw-, g: r--, o: r--
-		if err != nil {
-			return Config{}, err
-		}
-		defer file.Close()
-		_, err = file.WriteString(defaultConfigContent)
-		if err != nil {
-			return Config{}, err
-		}
-		return parseConfig(strings.NewReader(defaultConfigContent))
+		return makeDefaultConfig(location)
 	}
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("error when opening config file: %w", err)
 	}
 	defer file.Close()
 	conf, err := parseConfig(file)
@@ -49,9 +37,29 @@ func ParseFromConfigDir(location string) (Config, error) {
 	return conf, err
 }
 
+func makeDefaultConfig(location string) (Config, error) {
+	err := os.MkdirAll(location, 0755) // u: rwx, g: r-x, o: r-x
+	if err != nil {
+		return Config{}, fmt.Errorf("error when creating config dir: %w", err)
+	}
+	file, err := os.OpenFile(filepath.Join(location, "config.json"), os.O_CREATE|os.O_WRONLY, 0644) // u: rw-, g: r--, o: r--
+	if err != nil {
+		return Config{}, fmt.Errorf("error when creating config file: %w", err)
+	}
+	defer file.Close()
+	_, err = file.WriteString(defaultConfigContent)
+	if err != nil {
+		return Config{}, fmt.Errorf("error when writing default config: %w", err)
+	}
+	return parseConfig(strings.NewReader(defaultConfigContent))
+}
+
 func parseConfig(r io.Reader) (Config, error) {
 	var conf Config
 	decoder := json.NewDecoder(r)
 	err := decoder.Decode(&conf)
-	return conf, err
+	if err != nil {
+		return Config{}, fmt.Errorf("error when decoding config: %w", err)
+	}
+	return conf, nil
 }

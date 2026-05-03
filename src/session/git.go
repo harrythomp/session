@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -10,12 +11,12 @@ type Worktree struct {
 	Branch string
 }
 
-func findWorktreesFromRealPath(path string) ([]Worktree, error) {
+func findWorktreesFromRealPath(realPath string) ([]Worktree, error) {
 	cmd := exec.Command("git", "worktree", "list", "--porcelain")
-	cmd.Dir = path
+	cmd.Dir = realPath
 	outBytes, err := cmd.Output()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error when getting git worktree list for %s: %w", realPath, err)
 	}
 	out := string(outBytes)
 
@@ -26,10 +27,10 @@ func findWorktreesFromRealPath(path string) ([]Worktree, error) {
 	lines := strings.SplitSeq(out, "\n")
 	for line := range lines {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "worktree") {
-			currentTree.Path = line[len("worktree "):]
-		} else if strings.HasPrefix(line, "branch refs/heads/") {
-			currentTree.Branch = line[len("branch refs/heads/"):]
+		if after, ok := strings.CutPrefix(line, "worktree "); ok {
+			currentTree.Path = after
+		} else if after, ok := strings.CutPrefix(line, "branch refs/heads/"); ok {
+			currentTree.Branch = after
 		} else if line == "bare" {
 			currentTree = Worktree{}
 		} else if currentTree != (Worktree{}) && line == "" {
@@ -46,7 +47,7 @@ func getBranchFromRealPath(realPath string) (string, error) {
 	cmd.Dir = realPath
 	outBytes, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error when getting branch for %s: %w", realPath, err)
 	}
 	out := string(outBytes)
 	return strings.TrimSpace(out), nil

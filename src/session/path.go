@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -32,7 +33,7 @@ func expandPathHomeDir(path string) (string, error) {
 	if strings.HasPrefix(path, "~") {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error when expanding path home dir %s: %w", path, err)
 		}
 		return filepath.Join(homeDir, path[1:]), nil
 	}
@@ -40,7 +41,7 @@ func expandPathHomeDir(path string) (string, error) {
 }
 
 func expandPathWildcards(path string) ([]string, error) {
-	pathParts := strings.Split(path, "/")
+	pathParts := strings.Split(path, string(filepath.Separator))
 
 	currentPath := ""
 
@@ -50,10 +51,10 @@ func expandPathWildcards(path string) ([]string, error) {
 		if part == "*" {
 			partChildren, err := os.ReadDir(currentPath)
 			if errors.Is(err, fs.ErrNotExist) {
-				return realPaths, nil
+				return realPaths, nil // non existant directories can be safely ignored
 			}
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error when expanding path wildcards %s: %w", path, err)
 			}
 			for _, child := range partChildren {
 				if isVisibleDirectory(child) {
@@ -73,7 +74,7 @@ func expandPathWildcards(path string) ([]string, error) {
 		if i == 0 {
 			currentPath = part
 		} else {
-			currentPath = currentPath + "/" + part
+			currentPath = currentPath + string(filepath.Separator) + part
 		}
 	}
 
@@ -84,18 +85,15 @@ func expandPathWildcards(path string) ([]string, error) {
 
 func sessionChildrenOfRealPath(realPath string) ([]Session, error) {
 	children, err := os.ReadDir(realPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		return make([]Session, 0), nil
-	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error when getting sessions of %s: %w", realPath, err)
 	}
 
 	sessions := make([]Session, 0)
 
 	for _, child := range children {
 		if isVisibleDirectory(child) {
-			childPath := realPath + "/" + child.Name()
+			childPath := filepath.Join(realPath, child.Name())
 			worktrees, err := findWorktreesFromRealPath(childPath)
 
 			// There are no worktrees, or there is only one worktree in the same or a parent directory

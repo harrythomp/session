@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"fmt"
 	"harry/session/src/config"
 	"os"
 	"os/exec"
@@ -9,18 +10,26 @@ import (
 	"strings"
 )
 
-func findSessionsFromTmux() ([]Session, error) {
-	names := listTmuxSessionsF("#{session_name}")
-	paths := listTmuxSessionsF("#{session_path}")
+var tmuxSessionDataMismatchError = errors.New("unable to read tmux sessions (length of session data doesn't match)")
 
-	if len(names) != len(paths) {
-		return nil, errors.New("Unable to read tmux sessions")
+func findSessionsFromTmux() ([]Session, error) {
+	names, err := listTmuxSessionsF("#{session_name}")
+	if err != nil {
+		return nil, err
+	}
+	paths, err := listTmuxSessionsF("#{session_path}")
+	if err != nil {
+		return nil, err
 	}
 
-	sessions := make([]Session, 0)
+	if len(names) != len(paths) {
+		return nil, tmuxSessionDataMismatchError
+	}
+
+	sessions := make([]Session, 0, len(names))
 
 	for i, name := range names {
-		branch, _ := getBranchFromRealPath(paths[i])
+		branch, _ := getBranchFromRealPath(paths[i]) // ignore error, branch is optional
 		sessions = append(sessions, Session{
 			Name:        name,
 			Path:        paths[i],
@@ -33,16 +42,16 @@ func findSessionsFromTmux() ([]Session, error) {
 	return sessions, nil
 }
 
-func listTmuxSessionsF(format string) []string {
+func listTmuxSessionsF(format string) ([]string, error) {
 	cmd := exec.Command("tmux", "list-sessions", "-F", format)
 	out, err := cmd.Output()
 	if err != nil {
-		return make([]string, 0)
+		return nil, fmt.Errorf("error when getting tmux sessions: %w", err)
 	}
 	str := string(out)
 	trimmed := strings.TrimSpace(str)
 	lines := strings.Split(trimmed, "\n")
-	return lines
+	return lines, nil
 }
 
 func AttachToSession(conf config.Config, session Session) error {
@@ -85,8 +94,11 @@ func attachTmuxToSession(session Session) error {
 
 func startNewTmuxSession(session Session) error {
 	cmd := exec.Command("tmux", "new-session", "-c", session.Path, "-s", session.Name, "-d")
-	_, err := cmd.Output()
-	return err
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error when starting new tmux session: %w", err)
+	}
+	return nil
 }
 
 func sessionInit(conf config.Config, session Session) error {
@@ -120,9 +132,9 @@ func sessionInit(conf config.Config, session Session) error {
 
 func tryInitScript(script string, session Session) (bool, error) {
 	if file, err := os.Stat(script); err == nil && !file.IsDir() {
-		_, err := exec.Command("tmux", "send-keys", "-t", session.Name+":1", script+" "+session.Name, "c-M").Output()
+		err := exec.Command("tmux", "send-keys", "-t", session.Name+":1", script+" "+session.Name, "c-M").Run()
 		if err != nil {
-			return true, err
+			return true, fmt.Errorf("error when running init script (%s): %w", script, err)
 		}
 		return true, nil
 	}

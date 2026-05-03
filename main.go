@@ -14,7 +14,7 @@ import (
 func main() {
 	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
-		fmt.Printf("Error when getting user config dir: %v\n", err)
+		fmt.Print(err)
 		os.Exit(1)
 		return
 	}
@@ -23,14 +23,14 @@ func main() {
 
 	conf, err := config.ParseFromConfigDir(configDir)
 	if err != nil {
-		fmt.Printf("Error when parsing config: %v\n", err)
+		fmt.Print(err)
 		os.Exit(1)
 		return
 	}
 
 	sessions, err := session.FindSessions(conf)
 	if err != nil {
-		fmt.Printf("Error when finding sessions: %v\n", err)
+		fmt.Print(err)
 		os.Exit(1)
 		return
 	}
@@ -38,7 +38,7 @@ func main() {
 	program := tea.NewProgram(ui.InitialModel(sessions))
 	model, err := program.Run()
 	if err != nil {
-		fmt.Printf("Error when running program: %v\n", err)
+		fmt.Print(err)
 		os.Exit(1)
 		return
 	}
@@ -56,7 +56,7 @@ func main() {
 
 	err = session.AttachToSession(conf, *uiModel.SelectedSession)
 	if err != nil {
-		fmt.Printf("Error when attaching to session: %v\n", err)
+		fmt.Print(err)
 		os.Exit(1)
 		return
 	}
