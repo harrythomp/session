@@ -57,7 +57,7 @@ func newSessionsFromRepositoryPath(path string, isActive bool) []Session {
 	return sessions
 }
 
-func newSessionFromWorkingPath(path string, isActive bool) Session {
+func NewSessionFromWorkingPath(path string, isActive bool) Session {
 	session := Session{
 		Name:           filepath.Base(path),
 		WorkingPath:    path,

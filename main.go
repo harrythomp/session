@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"harry/session/src/config"
 	"harry/session/src/session"
 	"harry/session/src/ui"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -41,29 +43,78 @@ func main() {
 		return
 	}
 
-	program := tea.NewProgram(ui.InitialModel(sessions))
-	model, err := program.Run()
+	var selectedSession *session.Session
+	if len(os.Args) > 1 {
+		selectedSession, err = interpretSessionFromArg(sessions, os.Args[1])
+		if err != nil {
+			fmt.Print(err)
+			os.Exit(1)
+		}
+	} else {
+		selectedSession, err = selectSession(sessions)
+		if err != nil {
+			fmt.Print(err)
+			os.Exit(1)
+		}
+	}
+
+	if selectedSession == nil {
+		return
+	}
+
+	err = session.AttachTmuxToSession(conf, *selectedSession)
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 		return
+	}
+}
+
+func selectSession(sessions []session.Session) (*session.Session, error) {
+	program := tea.NewProgram(ui.InitialModel(sessions))
+	model, err := program.Run()
+	if err != nil {
+		return nil, err
 	}
 
 	uiModel, ok := model.(ui.Model)
 	if !ok {
-		fmt.Printf("Error when casting model to ui.Model: %v\n", err)
-		os.Exit(1)
-		return
+		return nil, fmt.Errorf("Error when casting model to ui.Model: %v", err)
 	}
 
-	if uiModel.SelectedSession == nil {
-		return
-	}
+	return uiModel.SelectedSession, nil
+}
 
-	err = session.AttachTmuxToSession(conf, *uiModel.SelectedSession)
+func interpretSessionFromArg(sessions []session.Session, arg string) (*session.Session, error) {
+	argAsPath, err := filepath.Abs(arg)
 	if err != nil {
-		fmt.Print(err)
-		os.Exit(1)
-		return
+		return nil, err
+	}
+
+	// Check if arg matches name or working path from regular session search
+	for _, session := range sessions {
+		if session.Name == arg || session.WorkingPath == argAsPath {
+			return &session, nil
+		}
+	}
+
+	// Check if arg is a path
+	fi, err := os.Lstat(arg)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, fmt.Errorf("error when reading path %s: %v", arg, err)
+	}
+	if err == nil && fi.IsDir() {
+		// Create a new session from the path provided by arg
+		s := session.NewSessionFromWorkingPath(arg, false)
+		return &s, nil
+	} else {
+		// Create a new session in the current working directory with the name provided by path
+		wd, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		s := session.NewSessionFromWorkingPath(wd, false)
+		s.Name = arg
+		return &s, nil
 	}
 }

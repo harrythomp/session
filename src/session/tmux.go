@@ -19,7 +19,7 @@ func (f TmuxSessionFinder) FindSessions() ([]Session, error) {
 	}
 	sessions := make([]Session, 0, len(tmuxSessions))
 	for _, tmuxSession := range tmuxSessions {
-		session := newSessionFromWorkingPath(tmuxSession.Path, true)
+		session := NewSessionFromWorkingPath(tmuxSession.Path, true)
 		session.Name = tmuxSession.Name
 		sessions = append(sessions, session)
 	}
@@ -110,14 +110,14 @@ func attachTmuxToSession(session Session) error {
 		cmd := exec.Command("tmux", "switch", "-t", session.Name)
 		err := cmd.Run()
 		if err != nil {
-			return err
+			return fmt.Errorf("error when switching to session %s: %v", session.Name, err)
 		}
 	} else {
 		cmd := exec.Command("tmux", "attach", "-t", session.Name)
 		cmd.Stdin = os.Stdin
 		err := cmd.Run()
 		if err != nil {
-			return err
+			return fmt.Errorf("error when attaching to session %s: %v", session.Name, err)
 		}
 	}
 	return nil
