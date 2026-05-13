@@ -7,6 +7,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+var jumpDistance = 5
+
 type Model struct {
 	Sessions        []session.Session
 	ViewSessions    []session.Session
@@ -43,6 +45,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Cursor++
 		case "ctrl+k", "up":
 			m.Cursor--
+		case "ctrl+d":
+			m.Cursor += jumpDistance
+		case "ctrl+u":
+			m.Cursor -= jumpDistance
 		case "ctrl+w":
 			separatorsWithIndex := map[string]int{" ": -1, "/": -1}
 			separator := " "
