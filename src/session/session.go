@@ -21,14 +21,17 @@ func (s Session) UniqueKey() SessionKey {
 	return SessionKey{Name: s.Name, WorkingPath: s.WorkingPath}
 }
 
-func NewSessionFromWorkingPath(path string, isActive bool) Session {
+func (s *Session) SetName(name string) {
+	s.Name = cleanTmuxName(name)
+}
+
+func NewSessionFromWorkingPath(path string) Session {
 	session := Session{
-		Name:           CleanTmuxName(filepath.Base(path)),
 		WorkingPath:    path,
 		RepositoryPath: path,
 		Branch:         "",
-		IsActive:       isActive,
 	}
+	session.SetName(filepath.Base(path))
 
 	worktrees, err := findGitWorktreesFromPath(path)
 

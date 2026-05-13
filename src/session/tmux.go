@@ -18,8 +18,9 @@ func (f TmuxSessionFinder) FindSessions() ([]Session, error) {
 	}
 	sessions := make([]Session, 0, len(tmuxSessions))
 	for _, tmuxSession := range tmuxSessions {
-		session := NewSessionFromWorkingPath(tmuxSession.Path, true)
-		session.Name = tmuxSession.Name
+		session := NewSessionFromWorkingPath(tmuxSession.Path)
+		session.SetName(tmuxSession.Name)
+		session.IsActive = true
 		sessions = append(sessions, session)
 	}
 	return sessions, nil
@@ -163,6 +164,6 @@ func tryTmuxSessionInitScript(script string, session Session) (bool, error) {
 	return false, nil
 }
 
-func CleanTmuxName(name string) string {
+func cleanTmuxName(name string) string {
 	return strings.ReplaceAll(name, ".", "_")
 }

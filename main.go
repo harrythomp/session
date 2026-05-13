@@ -105,7 +105,7 @@ func interpretSessionFromArg(sessions []session.Session, arg string) (*session.S
 	}
 	if err == nil && fi.IsDir() {
 		// Create a new session from the path provided by arg
-		s := session.NewSessionFromWorkingPath(arg, false)
+		s := session.NewSessionFromWorkingPath(arg)
 		return &s, nil
 	} else {
 		// Create a new session in the current working directory with the name provided by path
@@ -113,8 +113,8 @@ func interpretSessionFromArg(sessions []session.Session, arg string) (*session.S
 		if err != nil {
 			return nil, err
 		}
-		s := session.NewSessionFromWorkingPath(wd, false)
-		s.Name = session.CleanTmuxName(arg)
+		s := session.NewSessionFromWorkingPath(wd)
+		s.SetName(arg)
 		return &s, nil
 	}
 }
