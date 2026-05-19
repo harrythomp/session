@@ -99,13 +99,13 @@ func interpretSessionFromArg(sessions []session.Session, arg string) (*session.S
 	}
 
 	// Check if arg is a path
-	fi, err := os.Lstat(arg)
+	fi, err := os.Lstat(argAsPath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, fmt.Errorf("error when reading path %s: %v", arg, err)
 	}
 	if err == nil && fi.IsDir() {
 		// Create a new session from the path provided by arg
-		s := session.NewSessionFromWorkingPath(arg)
+		s := session.NewSessionFromWorkingPath(argAsPath)
 		return &s, nil
 	} else {
 		// Create a new session in the current working directory with the name provided by path
