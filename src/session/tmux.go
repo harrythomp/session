@@ -155,7 +155,7 @@ func tmuxSessionInit(scriptsLocation string, session Session) error {
 
 func tryTmuxSessionInitScript(script string, session Session) (bool, error) {
 	if file, err := os.Stat(script); err == nil && !file.IsDir() {
-		err := exec.Command("tmux", "send-keys", "-t", session.Name+":1", script+" "+session.Name, "c-M").Run()
+		err := exec.Command("tmux", "send-keys", "-t", session.Name+":", script+" "+session.Name, "c-M").Run()
 		if err != nil {
 			return true, fmt.Errorf("error when running init script (%s): %w", script, err)
 		}
