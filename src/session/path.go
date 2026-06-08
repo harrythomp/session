@@ -75,25 +75,20 @@ func expandPathWildcards(path string) ([]string, error) {
 
 	for i, part := range pathParts {
 		if part == "*" {
-			partChildren, err := os.ReadDir(currentPath)
-			if errors.Is(err, fs.ErrNotExist) {
-				return realPaths, nil // non existant directories can be safely ignored
-			}
+			partChildren, err := childrenOfPath(currentPath)
 			if err != nil {
-				return nil, fmt.Errorf("error when expanding path wildcards %s: %w", path, err)
+				return nil, err
 			}
 			for _, child := range partChildren {
-				if isVisibleDirectory(child) {
-					newPath := filepath.Join(currentPath, child.Name())
-					if i < len(pathParts)-1 {
-						newPath = filepath.Join(newPath, filepath.Join(pathParts[i+1:]...))
-					}
-					childPaths, err := expandPathWildcards(newPath)
-					if err != nil {
-						return nil, err
-					}
-					realPaths = append(realPaths, childPaths...)
+				newPath := child
+				if i < len(pathParts)-1 {
+					newPath = filepath.Join(newPath, filepath.Join(pathParts[i+1:]...))
 				}
+				childPaths, err := expandPathWildcards(newPath)
+				if err != nil {
+					return nil, err
+				}
+				realPaths = append(realPaths, childPaths...)
 			}
 			return realPaths, nil
 		}
@@ -112,6 +107,9 @@ func expandPathWildcards(path string) ([]string, error) {
 func childrenOfPath(path string) ([]string, error) {
 	foundPaths := make([]string, 0)
 	children, err := os.ReadDir(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error when getting children of %s: %w", path, err)
 	}
