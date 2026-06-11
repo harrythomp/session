@@ -157,7 +157,15 @@ func (m Model) View() tea.View {
 	s.WriteString(branch)
 	s.WriteString("\n\n")
 
+	headerSize := len(strings.Split(s.String(), "\n")) - 1
+	availableRows := m.Height - headerSize
+
+	windowStart := max(0, m.Cursor-availableRows+(availableRows/2))
+
 	for i, session := range m.ViewSessions {
+		if i < windowStart {
+			continue
+		}
 		s.WriteString(strings.Repeat(" ", xStart))
 		if i == m.Cursor {
 			s.WriteString("▸ ")
