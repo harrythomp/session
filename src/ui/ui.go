@@ -65,8 +65,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Search = m.Search[:separatorsWithIndex[separator]+1]
 			}
 		case "enter":
-			m.SelectedSession = &m.ViewSessions[m.Cursor]
-			return m, tea.Quit
+			if len(m.ViewSessions) > 0 && m.Cursor < len(m.ViewSessions) {
+				m.SelectedSession = &m.ViewSessions[m.Cursor]
+				return m, tea.Quit
+			}
 		case "backspace":
 			if len(m.Search) > 0 {
 				m.Search = m.Search[:len(m.Search)-1]
