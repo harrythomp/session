@@ -18,9 +18,10 @@ type Model struct {
 	SelectedSession *session.Session
 	Width           int
 	Height          int
+	Favourites      map[string]string
 }
 
-func InitialModel(sessions []session.Session) Model {
+func InitialModel(sessions []session.Session, favourites map[string]string) Model {
 	return Model{
 		Sessions:        sessions,
 		ViewSessions:    session.FuzzySearch(sessions, ""),
@@ -28,6 +29,7 @@ func InitialModel(sessions []session.Session) Model {
 		Search:          "",
 		Cursor:          0,
 		SelectedSession: nil,
+		Favourites:      favourites,
 	}
 }
 
@@ -83,6 +85,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.ViewSessions = filterSessions(m.Sessions, m.HideInactive)
 		m.ViewSessions = session.FuzzySearch(m.ViewSessions, m.Search)
+		m.ViewSessions = searchForFavourite(m.ViewSessions, m.Favourites, m.Search)
 
 		if m.Cursor >= len(m.ViewSessions) {
 			m.Cursor = len(m.ViewSessions) - 1
@@ -212,4 +215,36 @@ func filterSessions(sessions []session.Session, hideInactive bool) []session.Ses
 		}
 	}
 	return filteredSessions
+}
+
+func searchForFavourite(sessions []session.Session, favourites map[string]string, search string) []session.Session {
+	searchedFavourite, ok := favourites[search]
+	if !ok {
+		return sessions
+	}
+
+	matchedFavouriteIndex := -1
+	for i, session := range sessions {
+		if session.WorkingPath == searchedFavourite {
+			matchedFavouriteIndex = i
+			break
+		}
+	}
+	if matchedFavouriteIndex == -1 {
+		return sessions
+	}
+
+	newSesssions := make([]session.Session, len(sessions))
+	newSesssions[0] = sessions[matchedFavouriteIndex]
+	for i := range sessions {
+		if i == matchedFavouriteIndex {
+			continue
+		}
+		newI := i
+		if i < matchedFavouriteIndex {
+			newI = i + 1
+		}
+		newSesssions[newI] = sessions[i]
+	}
+	return newSesssions
 }

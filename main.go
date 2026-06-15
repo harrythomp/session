@@ -51,7 +51,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		selectedSession, err = selectSession(sessions)
+		selectedSession, err = selectSession(sessions, conf.Favourites)
 		if err != nil {
 			fmt.Print(err)
 			os.Exit(1)
@@ -70,8 +70,8 @@ func main() {
 	}
 }
 
-func selectSession(sessions []session.Session) (*session.Session, error) {
-	program := tea.NewProgram(ui.InitialModel(sessions))
+func selectSession(sessions []session.Session, favourites map[string]string) (*session.Session, error) {
+	program := tea.NewProgram(ui.InitialModel(sessions, favourites))
 	model, err := program.Run()
 	if err != nil {
 		return nil, err

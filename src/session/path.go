@@ -26,7 +26,7 @@ func (f PathSessionFinder) FindSessions() ([]Session, error) {
 		}
 	}
 	for _, path := range f.IncludePaths {
-		path, err := expandPathHomeDir(path)
+		path, err := ExpandPathHomeDir(path)
 		if err != nil {
 			return nil, err
 		}
@@ -36,7 +36,7 @@ func (f PathSessionFinder) FindSessions() ([]Session, error) {
 }
 
 func searchPath(path string) ([]string, error) {
-	path, err := expandPathHomeDir(path)
+	path, err := ExpandPathHomeDir(path)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func searchPath(path string) ([]string, error) {
 	return foundPaths, nil
 }
 
-func expandPathHomeDir(path string) (string, error) {
+func ExpandPathHomeDir(path string) (string, error) {
 	if strings.HasPrefix(path, "~") {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {

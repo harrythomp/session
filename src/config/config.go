@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"harry/session/src/session"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,15 +13,18 @@ import (
 
 type Config struct {
 	Location     string
-	SearchPaths  []string `json:"searchPaths"`
-	IncludePaths []string `json:"includePaths"`
+	SearchPaths  []string          `json:"searchPaths"`
+	IncludePaths []string          `json:"includePaths"`
+	Favourites   map[string]string `json:"favourites"`
 }
 
 const defaultConfigContent = `{
 	"searchPaths": [
 	],
 	"includePaths": [
-	]
+	],
+	"favourites": {
+	}
 }`
 
 func ParseFromConfigDir(location string) (Config, error) {
@@ -34,6 +38,13 @@ func ParseFromConfigDir(location string) (Config, error) {
 	defer file.Close()
 	conf, err := parseConfig(file)
 	conf.Location = location
+	for key, favourite := range conf.Favourites {
+		expanded, err := session.ExpandPathHomeDir(favourite)
+		if err != nil {
+			return Config{}, err
+		}
+		conf.Favourites[key] = expanded
+	}
 	return conf, err
 }
 
