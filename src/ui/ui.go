@@ -170,11 +170,19 @@ func (m Model) View() tea.View {
 		}
 		s.WriteString(strings.Repeat(" ", xStart))
 		if i == m.Cursor {
+			s.WriteByte(0x1b)
+			s.WriteString("[1;32m") // bold, green
 			s.WriteString("▸ ")
 		} else {
+			s.WriteByte(0x1b)
+			s.WriteString("[0;37m") // reset, white
 			s.WriteString("  ")
 		}
 		if session.IsActive {
+			if i != m.Cursor {
+				s.WriteByte(0x1b)
+				s.WriteString("[0;33m") // reset, yellow
+			}
 			s.WriteString("* ")
 		} else {
 			s.WriteString("  ")
